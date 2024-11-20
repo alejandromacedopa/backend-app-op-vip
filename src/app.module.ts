@@ -8,6 +8,8 @@ import { RolesModule } from './roles/roles.module';
 import { CategoriesModule } from './categories/categories.module';
 import { ProductsModule } from './products/products.module';
 import { AddressModule } from './address/address.module';
+import { MercadoPagoModule } from './mercado_pago/mercado_pago.module';
+import { OrdersModule } from './orders/orders.module';
 
 @Module({
   imports: [
@@ -26,7 +28,9 @@ import { AddressModule } from './address/address.module';
     RolesModule,
     CategoriesModule,
     ProductsModule,
-    AddressModule
+    AddressModule,
+    MercadoPagoModule,
+    OrdersModule
   ],
   controllers: [AppController],
   providers: [AppService],

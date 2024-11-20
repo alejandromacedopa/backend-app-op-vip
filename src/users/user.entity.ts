@@ -1,5 +1,6 @@
 import { hash } from "bcrypt";
 import { Address } from "src/address/address.entity";
+import { Order } from "src/orders/order.entity";
 import { Rol } from "src/roles/rol.entity";
 import { BeforeInsert, Column, Entity, JoinTable, ManyToMany, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 
@@ -52,6 +53,9 @@ export class User{
 
     @OneToMany(() => Address, address => address.id)
     address: Address;
+    
+    @OneToMany(() => Order, order => order.id)
+    order: Order;
   
   @BeforeInsert()
   async hashPassword(){
