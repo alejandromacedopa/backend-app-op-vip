@@ -12,6 +12,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Order } from 'src/orders/order.entity';
 import { OrderHasProducts } from 'src/orders/order_has_products.entity';
 import { Repository } from 'typeorm';
+import { PaymentResponse } from './models/payment_response';
 
 @Injectable()
 export class MercadoPagoService {
@@ -21,7 +22,7 @@ export class MercadoPagoService {
 
         @InjectRepository(Order) private ordersRepository: Repository<Order>,
         @InjectRepository(OrderHasProducts) private ordersHasProductsRepository: Repository<OrderHasProducts>,
-    ) {}
+    ) { }
 
     getIdentificationTypes(): Observable<AxiosResponse<identification_type[]>> {
         return this.httpService.get(MERCADO_PAGO_API + '/identification_types', { headers: MERCADO_PAGO_HEADERS }).pipe(
@@ -39,8 +40,9 @@ export class MercadoPagoService {
     }
     createCardToken(cardTokenBody: CardTokenBody): Observable<CardTokenResponse> {
         return this.httpService.post(
-            MERCADO_PAGO_API + `/card_tokens?public_key=TEST-d60d990b-90df-45cf-a170-f41e59c37fd6`,
-            cardTokenBody, 
+            MERCADO_PAGO_API + `/card_tokens?public_key=TEST-1eb2af36-3c1f-410c-9288-0be2394e115b`,
+
+            cardTokenBody,
             { headers: MERCADO_PAGO_HEADERS }
         ).pipe(
             catchError((error: AxiosError) => {
@@ -49,30 +51,57 @@ export class MercadoPagoService {
         ).pipe(map((resp: AxiosResponse<CardTokenResponse>) => resp.data));
     }
 
-    async createPayment(paymentBody: PaymentBody): Promise<Observable<PaymentResponse>> {
-        
-        const newOrder = this.ordersRepository.create(paymentBody.order);
-       const savedOrder = await this.ordersRepository.save(newOrder);
+    async createPayment(paymentBody: PaymentBody): Promise<Observable<SimplifiedPaymentResponse>> {
+        console.log('Headers recibidos:', MERCADO_PAGO_HEADERS);
+        console.log('paymentBody recibido:', paymentBody);
 
-        for (const product of paymentBody.order.products) {
-            const ohp = new OrderHasProducts();
-            ohp.id_order = savedOrder.id;
-            ohp.id_product = product.id;
-            ohp.quantity = product.quantity;
-            await this.ordersHasProductsRepository.save(ohp);
+        try {
+            // Transacción en la base de datos (en una sola transacción si es posible)
+            const newOrder = this.ordersRepository.create(paymentBody.order);
+            const savedOrder = await this.ordersRepository.save(newOrder);
+
+            await this.ordersHasProductsRepository.save(
+                paymentBody.order.products.map(product => ({
+                    id_order: savedOrder.id,
+                    id_product: product.id,
+                    quantity: product.quantity,
+                }))
+            );
+            delete paymentBody.order; // Elimina la propiedad 'order'
+
+            return this.httpService.post(
+                MERCADO_PAGO_API + '/payments',
+                paymentBody,
+                { headers: MERCADO_PAGO_HEADERS }
+            ).pipe(
+                map((resp: AxiosResponse<PaymentResponse>) => {
+                    console.log('Respuesta completa:', resp.data);
+                    return this.simplifyPaymentResponse(resp.data);
+                }),
+                catchError((error: AxiosError) => {
+                    console.error('Error:', error.response?.data || error.message);
+                    // Manejo de rollback en la BD si falla Mercado Pago
+                    //  (Implementa la lógica para revertir las inserciones en la base de datos si la transacción de Mercado Pago falla)
+
+                    throw new HttpException(error.response?.data || 'Error desconocido', error.response?.status || 500);
+                })
+            );
+        } catch (error) {
+            console.error("Error creating payment:", error);
+            throw new HttpException('Error al procesar el pago', 500);
         }
-        
-        delete paymentBody.order;
+    }
 
-        return this.httpService.post(
-            MERCADO_PAGO_API + '/payments',
-            paymentBody, 
-            { headers: MERCADO_PAGO_HEADERS }
-        ).pipe(
-            catchError((error: AxiosError) => {
-                throw new HttpException(error.response.data, error.response.status);
-            })
-        ).pipe(map((resp: AxiosResponse<PaymentResponse>) => resp.data));
+    private simplifyPaymentResponse(response: PaymentResponse): SimplifiedPaymentResponse {
+        const simplified = {
+            id: response.id,
+            status: response.status,
+            transaction_amount: response.transaction_amount,
+            payment_method_id:response.payment_method_id,
+            payer: { email: response.payer.email }
+        };
+        console.log('Respuesta simplificada:', simplified);
+        return simplified;
     }
 
 }
