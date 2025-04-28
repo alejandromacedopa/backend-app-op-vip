@@ -1,28 +1,26 @@
-import { User } from "src/users/user.entity";
-import { Column, Entity, ManyToMany, PrimaryColumn } from "typeorm";
+import { User } from 'src/users/user.entity';
+import { Column, Entity, ManyToMany, PrimaryColumn } from 'typeorm';
 
-@Entity({name: 'roles'})
+@Entity({ name: 'roles' })
 export class Rol {
-    
-    @PrimaryColumn()
-    id: string;
+  @PrimaryColumn()
+  id: string;
 
-    @Column({ unique: true })
-    name: string
-    
-    @Column()
-    image: string
+  @Column({ unique: true })
+  name: string;
 
-    @Column()
-    route: string
+  @Column()
+  image: string;
 
-    @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
-    created_at: Date;
-    
-    @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
-    updated_at: Date;
+  @Column()
+  route: string;
 
-    @ManyToMany(() => User, (user) => user.roles)
-    users: User[];
+  @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
+  created_at: Date;
 
+  @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
+  updated_at: Date;
+
+  @ManyToMany(() => User, user => user.roles)
+  users: User[];
 }

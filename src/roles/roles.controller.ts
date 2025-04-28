@@ -8,13 +8,12 @@ import { JwtRolesGuard } from 'src/auth/jwt/jwt-roles.guard';
 
 @Controller('roles')
 export class RolesController {
+  constructor(private rolesService: RolesService) {}
 
-    constructor(private rolesService: RolesService) {}
-
- // @HasRoles(JwtRole.ADMIN)
-   // @UseGuards(JwtAuthGuard, JwtRolesGuard)
-    @Post()
-    create(@Body() rol: CreateRolDto) {
-        return this.rolesService.create(rol);
-    }
+  @HasRoles(JwtRole.ADMIN)
+  @UseGuards(JwtAuthGuard, JwtRolesGuard)
+  @Post()
+  create(@Body() rol: CreateRolDto) {
+    return this.rolesService.create(rol);
+  }
 }
