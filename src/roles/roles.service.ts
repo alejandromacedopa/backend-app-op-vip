@@ -13,4 +13,8 @@ export class RolesService {
         const newRol = this.rolesRepository.create(rol);
         return this.rolesRepository.save(newRol);
     }
+
+  findAll() {
+    return this.rolesRepository.find();
+  }
 }
