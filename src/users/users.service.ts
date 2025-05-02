@@ -8,7 +8,7 @@ import storage = require('../util/cloud_storage');
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectRepository(User) private userRepository: Repository<User>) {}
+  constructor(@InjectRepository(User) private userRepository: Repository<User>) { }
 
   create(user: CreateUserDto) {
     const newUser = this.userRepository.create(user);
@@ -30,6 +30,20 @@ export class UsersService {
 
     const updatedUser = Object.assign(userFound, user);
     return this.userRepository.save(updatedUser);
+  }
+
+
+  // CREAR USUARIO CON IMAGEN
+  async createWithImage(file: Express.Multer.File, user: CreateUserDto) {
+    const url = await storage(file, file.originalname);
+
+    if (url === undefined || url === null) {
+      throw new HttpException('La imagen no se pudo guardar', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    user.image = url;
+    const newUser = this.userRepository.create(user);
+    return this.userRepository.save(newUser);
   }
 
   // FILTRAR USUARIOS POR ROL

@@ -24,7 +24,7 @@ import { JwtRolesGuard } from 'src/auth/jwt/jwt-roles.guard';
 
 @Controller('users')
 export class UsersController {
-  constructor(private userService: UsersService) {}
+  constructor(private userService: UsersService) { }
 
   @HasRoles(JwtRole.ADMIN)
   @UseGuards(JwtAuthGuard, JwtRolesGuard)
@@ -32,7 +32,6 @@ export class UsersController {
   findClientsOnly() {
     return this.userService.findClientsOnly();
   }
-X
 
   @HasRoles(JwtRole.CLIENT)
   @UseGuards(JwtAuthGuard, JwtRolesGuard)
@@ -40,11 +39,31 @@ X
   findAll() {
     return this.userService.findAll();
   }
-
-  @Post() //htpp://localhost:3000/users/
+ 
+  // CREATE USER WITHOUT IMAGE
+  @Post() // http://localhost:3000/users
   create(@Body() user: CreateUserDto) {
     return this.userService.create(user);
   }
+  
+  // CREATE USER WITH IMAGE
+  @Post('upload') // http://localhost:3000/users/upload
+  @UseInterceptors(FileInterceptor('file'))
+  createWithImage(
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 }),
+          new FileTypeValidator({ fileType: '.(png|jpeg|jpg)' }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+    @Body() user: CreateUserDto,
+  ) {
+    return this.userService.createWithImage(file, user);
+  }
+
 
   @HasRoles(JwtRole.CLIENT)
   @UseGuards(JwtAuthGuard, JwtRolesGuard)
