@@ -22,7 +22,7 @@ import { OrdersModule } from './orders/orders.module';
       database: 'oasis-premiun-db',
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
       synchronize: true,
-    }),
+    }),  
     UsersModule,
     AuthModule,
     RolesModule,

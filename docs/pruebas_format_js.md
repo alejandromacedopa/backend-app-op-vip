@@ -54,3 +54,15 @@ comentamos en el controller para que no prohiba crear:
 }
 
 -------------------------------------------------------
+
+BASE DE DATOS CON SQL (XAMMP)
+ypeOrmModule.forRoot({
+      type: 'mysql',
+      host: 'localhost',
+      port: 3306,
+      username: 'root',
+      password: '',
+      database: 'oasis-premiun-db',
+      entities: [__dirname + '/**/*.entity{.ts,.js}'],
+      synchronize: true,
+    }),
