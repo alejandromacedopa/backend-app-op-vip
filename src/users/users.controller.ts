@@ -24,7 +24,7 @@ import { JwtRolesGuard } from 'src/auth/jwt/jwt-roles.guard';
 
 @Controller('users')
 export class UsersController {
-  constructor(private userService: UsersService) { }
+  constructor(private userService: UsersService) {}
 
   @HasRoles(JwtRole.ADMIN)
   @UseGuards(JwtAuthGuard, JwtRolesGuard)
@@ -39,13 +39,13 @@ export class UsersController {
   findAll() {
     return this.userService.findAll();
   }
- 
+
   // CREATE USER WITHOUT IMAGE
   @Post() // http://localhost:3000/users
   create(@Body() user: CreateUserDto) {
     return this.userService.create(user);
   }
-  
+
   // CREATE USER WITH IMAGE
   @Post('upload') // http://localhost:3000/users/upload
   @UseInterceptors(FileInterceptor('file'))
@@ -56,14 +56,13 @@ export class UsersController {
           new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 }),
           new FileTypeValidator({ fileType: '.(png|jpeg|jpg)' }),
         ],
-      }),
+      })
     )
     file: Express.Multer.File,
-    @Body() user: CreateUserDto,
+    @Body() user: CreateUserDto
   ) {
     return this.userService.createWithImage(file, user);
   }
-
 
   @HasRoles(JwtRole.CLIENT)
   @UseGuards(JwtAuthGuard, JwtRolesGuard)
@@ -83,11 +82,11 @@ export class UsersController {
           new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 10 }),
           new FileTypeValidator({ fileType: '.(png|jpeg|jpg)' }),
         ],
-      }),
+      })
     )
     file: Express.Multer.File,
     @Param('id', ParseIntPipe) id: number,
-    @Body() user: UpdateUserDto,
+    @Body() user: UpdateUserDto
   ) {
     return this.userService.updateWithImage(file, id, user);
   }
