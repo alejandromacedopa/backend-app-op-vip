@@ -3,17 +3,19 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Category } from './categories.entity';
 import { Repository } from 'typeorm';
 import { CreateCategoriesDto } from './dto/create-categories.dto';
-import storage = require('../util/cloud_storage');
+import storage = require('../firebase/cloud_storage');
 import { UpdateCategoriesDto } from './dto/update-categories.dto';
 
 @Injectable()
 export class CategoriesService {
   constructor(@InjectRepository(Category) private categoriesRepository: Repository<Category>) {}
 
+  // LIST
   findAll() {
     return this.categoriesRepository.find();
   }
 
+  // CREATE
   async create(file: Express.Multer.File, category: CreateCategoriesDto) {
     const url = await storage(file, file.originalname);
 
@@ -26,6 +28,7 @@ export class CategoriesService {
     return this.categoriesRepository.save(newCategory);
   }
 
+  // PUT
   async update(id: number, category: UpdateCategoriesDto) {
     const categoryFound = await this.categoriesRepository.findOneBy({ id: id });
 
@@ -33,10 +36,13 @@ export class CategoriesService {
       throw new HttpException('La categoria no existe', HttpStatus.NOT_FOUND);
     }
 
+    categoryFound.updated_at = new Date(); // FECHA AUTOMATICAMENTE
+
     const updatedCategory = Object.assign(categoryFound, category);
     return this.categoriesRepository.save(updatedCategory);
   }
 
+  // PUT WITH IMAGE
   async updateWithImage(file: Express.Multer.File, id: number, category: UpdateCategoriesDto) {
     const url = await storage(file, file.originalname);
 
@@ -50,11 +56,13 @@ export class CategoriesService {
       throw new HttpException('La categoria no existe', HttpStatus.NOT_FOUND);
     }
 
+    categoryFound.updated_at = new Date(); // FECHA AL ACTUALIZAR
     category.image = url;
     const updatedCategory = Object.assign(categoryFound, category);
     return this.categoriesRepository.save(updatedCategory);
   }
 
+  // DELETE
   async delete(id: number) {
     const categoryFound = await this.categoriesRepository.findOneBy({ id: id });
 

@@ -7,8 +7,8 @@ import { Order } from 'src/orders/order.entity';
 import { OrderHasProducts } from 'src/orders/order_has_products.entity';
 
 @Module({
-  imports: [HttpModule, TypeOrmModule.forFeature([ Order, OrderHasProducts])],
+  imports: [HttpModule, TypeOrmModule.forFeature([Order, OrderHasProducts])],
   providers: [MercadoPagoService],
-  controllers: [MercadoPagoController]
+  controllers: [MercadoPagoController],
 })
 export class MercadoPagoModule {}

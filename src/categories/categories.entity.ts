@@ -1,25 +1,22 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 
-@Entity({name:'categories'})
-export class Category{
+@Entity({ name: 'categories' })
+export class Category {
+  @PrimaryGeneratedColumn()
+  id: number;
 
-@PrimaryGeneratedColumn()    
-id:number;
+  @Column({ unique: true })
+  name: string;
 
-@Column({ unique: true})
-name:string;
+  @Column()
+  description: string;
 
-@Column()
-description:string;
+  @Column()
+  image: string;
 
-@Column()
-image:string;
+  @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
+  created_at: Date;
 
-
-@Column({type: 'datetime', default: () =>'CURRENT_TIMESTAMP' })
-  created_at:Date;
-
-  @Column({type: 'datetime', default: () =>'CURRENT_TIMESTAMP' })
-  updated_at:Date;
-
+  @Column({ type: 'datetime', nullable: true })
+  updated_at: Date | null;
 }

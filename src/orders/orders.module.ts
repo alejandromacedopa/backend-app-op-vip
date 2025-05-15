@@ -9,8 +9,8 @@ import { Address } from 'src/address/address.entity';
 import { Product } from 'src/products/product.entity';
 
 @Module({
-  imports: [ TypeOrmModule.forFeature([ Order, OrderHasProducts, User, Address, Product ]) ],
+  imports: [TypeOrmModule.forFeature([Order, OrderHasProducts, User, Address, Product])],
   providers: [OrdersService],
-  controllers: [OrdersController]
+  controllers: [OrdersController],
 })
 export class OrdersModule {}

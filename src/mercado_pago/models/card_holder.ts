@@ -1,9 +1,9 @@
 export interface Cardholder {
-    identification: Identification;
-    name: string;
+  identification: Identification;
+  name: string;
 }
 
 export interface Identification {
-    number: string;
-    type:   string;
+  number: string;
+  type: string;
 }

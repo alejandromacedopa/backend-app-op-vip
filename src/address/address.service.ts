@@ -7,35 +7,35 @@ import { UpdateAddressDto } from './dto/update-address.dto';
 
 @Injectable()
 export class AddressService {
-    constructor(@InjectRepository(Address) private addressRepository: Repository<Address> ) {}
+  constructor(@InjectRepository(Address) private addressRepository: Repository<Address>) {}
 
-    create(address: CreateAddressDto) {
-        const newAddress = this.addressRepository.create(address);
-        return this.addressRepository.save(newAddress);
-    }
+  create(address: CreateAddressDto) {
+    const newAddress = this.addressRepository.create(address);
+    return this.addressRepository.save(newAddress);
+  }
 
-    findAll() {
-        return this.addressRepository.find()
-    }
-    
-    findByUser(id_user: number) {
-        return this.addressRepository.findBy({ id_user: id_user })
-    }
+  findAll() {
+    return this.addressRepository.find();
+  }
 
-    async update(id: number, address: UpdateAddressDto) {
-        const addressFound = await this.addressRepository.findOneBy({ id: id });
-        if (!addressFound) {
-            throw new HttpException('Direccion no encontrada', HttpStatus.NOT_FOUND);
-        }
-        const updatedAddress = Object.assign(addressFound, address);
-        return this.addressRepository.save(updatedAddress);
+  findByUser(id_user: number) {
+    return this.addressRepository.findBy({ id_user: id_user });
+  }
+
+  async update(id: number, address: UpdateAddressDto) {
+    const addressFound = await this.addressRepository.findOneBy({ id: id });
+    if (!addressFound) {
+      throw new HttpException('Direccion no encontrada', HttpStatus.NOT_FOUND);
     }
-    
-    async delete(id: number) {
-        const addressFound = await this.addressRepository.findOneBy({ id: id });
-        if (!addressFound) {
-            throw new HttpException('Direccion no encontrada', HttpStatus.NOT_FOUND);
-        }
-        return this.addressRepository.delete(id);
+    const updatedAddress = Object.assign(addressFound, address);
+    return this.addressRepository.save(updatedAddress);
+  }
+
+  async delete(id: number) {
+    const addressFound = await this.addressRepository.findOneBy({ id: id });
+    if (!addressFound) {
+      throw new HttpException('Direccion no encontrada', HttpStatus.NOT_FOUND);
     }
+    return this.addressRepository.delete(id);
+  }
 }

@@ -1,15 +1,13 @@
-import { IsNotEmpty, IsString } from "class-validator";
+import { IsNotEmpty, IsString } from 'class-validator';
 
-export class CreateCategoriesDto{
-    @IsNotEmpty()
-    @IsString()
-    name:string;
+export class CreateCategoriesDto {
+  @IsNotEmpty()
+  @IsString()
+  name: string;
 
-    @IsNotEmpty()
-    @IsString()
-    description:string;
- 
-    image :string;
-    
+  @IsNotEmpty()
+  @IsString()
+  description: string;
 
+  image: string;
 }

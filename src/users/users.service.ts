@@ -4,7 +4,7 @@ import { User } from './user.entity';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user-dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import storage = require('../util/cloud_storage');
+import storage = require('../firebase/cloud_storage');
 
 @Injectable()
 export class UsersService {

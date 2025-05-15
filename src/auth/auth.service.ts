@@ -14,7 +14,7 @@ export class AuthService {
     @InjectRepository(User) private userRepository: Repository<User>,
     @InjectRepository(Rol) private rolesRepository: Repository<Rol>,
 
-    private jwtService: JwtService,
+    private jwtService: JwtService
   ) {}
 
   async register(user: registerAuthDto) {

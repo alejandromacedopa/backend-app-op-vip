@@ -7,8 +7,8 @@ import { User } from 'src/users/user.entity';
 import { JwtStrategy } from 'src/auth/jwt/jwt.strategy';
 
 @Module({
-  imports: [ TypeOrmModule.forFeature([Address, User]) ],
+  imports: [TypeOrmModule.forFeature([Address, User])],
   providers: [AddressService, JwtStrategy],
-  controllers: [AddressController]
+  controllers: [AddressController],
 })
 export class AddressModule {}

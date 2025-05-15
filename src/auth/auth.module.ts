@@ -10,14 +10,15 @@ import { RolesService } from 'src/roles/roles.service';
 import { Rol } from 'src/roles/rol.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, Rol]),
-  JwtModule.register({
-    global: true,
-    secret: jwtConstants.secret,
-    signOptions: { expiresIn: '6h' },
-  }),
-],
-  providers: [AuthService,RolesService, JwtStrategy],
-  controllers: [AuthController]
+  imports: [
+    TypeOrmModule.forFeature([User, Rol]),
+    JwtModule.register({
+      global: true,
+      secret: jwtConstants.secret,
+      signOptions: { expiresIn: '6h' },
+    }),
+  ],
+  providers: [AuthService, RolesService, JwtStrategy],
+  controllers: [AuthController],
 })
 export class AuthModule {}
