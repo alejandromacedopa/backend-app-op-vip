@@ -13,6 +13,7 @@ import {
   UploadedFile,
   UseGuards,
   UseInterceptors,
+  BadRequestException,
 } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { HasRoles } from 'src/auth/jwt/has-roles';
@@ -36,7 +37,14 @@ export class CategoriesController {
 
   @HasRoles(JwtRole.ADMIN)
   @UseGuards(JwtAuthGuard, JwtRolesGuard)
-  @Post() // http:localhost:3000/categories -> POST
+  @Get(':id')
+  findById(@Param('id', ParseIntPipe) id: number) {
+    return this.CategoriesService.findById(id);
+  }
+
+  @HasRoles(JwtRole.ADMIN)
+  @UseGuards(JwtAuthGuard, JwtRolesGuard)
+  @Post()
   @UseInterceptors(FileInterceptor('file'))
   createWithImage(
     @UploadedFile(
@@ -53,31 +61,30 @@ export class CategoriesController {
     return this.CategoriesService.create(file, category);
   }
 
-  @HasRoles(JwtRole.ADMIN)
+  @HasRoles(JwtRole.ADMIN, JwtRole.SUPER_ADMIN)
   @UseGuards(JwtAuthGuard, JwtRolesGuard)
   @Put(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() category: UpdateCategoriesDto) {
-    return this.CategoriesService.update(id, category);
-  }
-
-  @HasRoles(JwtRole.ADMIN)
-  @UseGuards(JwtAuthGuard, JwtRolesGuard)
-  @Put('upload/:id') // http:localhost:3000/categories -> PUT
   @UseInterceptors(FileInterceptor('file'))
-  updateWithImage(
-    @UploadedFile(
-      new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 10 }),
-          new FileTypeValidator({ fileType: '.(png|jpeg|jpg)' }),
-        ],
-      })
-    )
-    file: Express.Multer.File,
+  update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() category: UpdateCategoriesDto
+    @Body() category: UpdateCategoriesDto,
+    @UploadedFile() file?: Express.Multer.File
   ) {
-    return this.CategoriesService.updateWithImage(file, id, category);
+    if (file) {
+      const maxSize = 1024 * 1024 * 10; // 10MB
+      const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+
+      if (file.size > maxSize) {
+        throw new BadRequestException('El archivo es demasiado grande, máximo 10MB');
+      }
+      if (!allowedTypes.includes(file.mimetype)) {
+        throw new BadRequestException('Tipo de archivo no permitido');
+      }
+
+      return this.CategoriesService.updateWithImage(file, id, category);
+    } else {
+      return this.CategoriesService.update(id, category);
+    }
   }
 
   @HasRoles(JwtRole.ADMIN)

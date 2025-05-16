@@ -15,48 +15,47 @@ export class CategoriesService {
     return this.categoriesRepository.find();
   }
 
+  async findById(id: number): Promise<Category> {
+    const category = await this.categoriesRepository.findOneBy({ id });
+    if (!category) {
+      throw new HttpException('La categoría no existe', HttpStatus.NOT_FOUND);
+    }
+    return category;
+  }
+
   // CREATE
   async create(file: Express.Multer.File, category: CreateCategoriesDto) {
     const url = await storage(file, file.originalname);
-
-    if (url === undefined && url === null) {
+    if (!url) {
       throw new HttpException('La imagen no se pudo guardar', HttpStatus.INTERNAL_SERVER_ERROR);
     }
-
     category.image = url;
     const newCategory = this.categoriesRepository.create(category);
     return this.categoriesRepository.save(newCategory);
   }
 
-  // PUT
+  // UPDATE (sin imagen)
   async update(id: number, category: UpdateCategoriesDto) {
-    const categoryFound = await this.categoriesRepository.findOneBy({ id: id });
-
+    const categoryFound = await this.categoriesRepository.findOneBy({ id });
     if (!categoryFound) {
       throw new HttpException('La categoria no existe', HttpStatus.NOT_FOUND);
     }
-
-    categoryFound.updated_at = new Date(); // FECHA AUTOMATICAMENTE
-
+    categoryFound.updated_at = new Date();
     const updatedCategory = Object.assign(categoryFound, category);
     return this.categoriesRepository.save(updatedCategory);
   }
 
-  // PUT WITH IMAGE
+  // UPDATE con imagen
   async updateWithImage(file: Express.Multer.File, id: number, category: UpdateCategoriesDto) {
     const url = await storage(file, file.originalname);
-
-    if (url === undefined && url === null) {
+    if (!url) {
       throw new HttpException('La imagen no se pudo guardar', HttpStatus.INTERNAL_SERVER_ERROR);
     }
-
-    const categoryFound = await this.categoriesRepository.findOneBy({ id: id });
-
+    const categoryFound = await this.categoriesRepository.findOneBy({ id });
     if (!categoryFound) {
       throw new HttpException('La categoria no existe', HttpStatus.NOT_FOUND);
     }
-
-    categoryFound.updated_at = new Date(); // FECHA AL ACTUALIZAR
+    categoryFound.updated_at = new Date();
     category.image = url;
     const updatedCategory = Object.assign(categoryFound, category);
     return this.categoriesRepository.save(updatedCategory);
@@ -64,12 +63,10 @@ export class CategoriesService {
 
   // DELETE
   async delete(id: number) {
-    const categoryFound = await this.categoriesRepository.findOneBy({ id: id });
-
+    const categoryFound = await this.categoriesRepository.findOneBy({ id });
     if (!categoryFound) {
       throw new HttpException('La categoria no existe', HttpStatus.NOT_FOUND);
     }
-
     return this.categoriesRepository.delete(id);
   }
 }

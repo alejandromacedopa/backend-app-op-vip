@@ -8,7 +8,7 @@ import storage = require('../firebase/cloud_storage');
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectRepository(User) private userRepository: Repository<User>) { }
+  constructor(@InjectRepository(User) private userRepository: Repository<User>) {}
 
   create(user: CreateUserDto) {
     const newUser = this.userRepository.create(user);
@@ -31,7 +31,6 @@ export class UsersService {
     const updatedUser = Object.assign(userFound, user);
     return this.userRepository.save(updatedUser);
   }
-
 
   // CREAR USUARIO CON IMAGEN
   async createWithImage(file: Express.Multer.File, user: CreateUserDto) {
