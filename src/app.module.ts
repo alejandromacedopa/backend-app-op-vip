@@ -10,6 +10,7 @@ import { ProductsModule } from './products/products.module';
 import { AddressModule } from './address/address.module';
 import { MercadoPagoModule } from './mercado_pago/mercado_pago.module';
 import { OrdersModule } from './orders/orders.module';
+import { StockModule } from './stock/stock.module';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { OrdersModule } from './orders/orders.module';
     AddressModule,
     MercadoPagoModule,
     OrdersModule,
+    StockModule,
   ],
   controllers: [AppController],
   providers: [AppService],

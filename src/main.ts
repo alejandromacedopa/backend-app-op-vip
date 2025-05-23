@@ -4,18 +4,32 @@ import { ValidationPipe } from '@nestjs/common';
 import * as bodyParser from 'body-parser';
 
 async function bootstrap() {
-  // Habilitar CORS con encabezados personalizados
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { rawBody: true });
+
   app.enableCors({
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Idempotency-Key'],
-    origin: '*', // O especifica las URLs permitidas
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    credentials: true,
   });
-  // Usar body-parser para limitar el tamaño del JSON de la solicitud
-  app.use(bodyParser.json({ limit: '10mb' })); // Límite de 10 MB
-  app.use(bodyParser.urlencoded({ limit: '10mb', extended: true })); // Para datos formateados como URL
-  app.useGlobalPipes(new ValidationPipe({ forbidUnknownValues: false }));
-  app.useGlobalPipes(new ValidationPipe({ forbidUnknownValues: false })); //activar las validaciones
+
+  app.use(bodyParser.json({ limit: '10mb' }));
+  app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      disableErrorMessages: false,
+      validationError: {
+        target: false,
+        value: true,
+      },
+    })
+  );
+
   await app.listen(3000, 'localhost');
+  console.log(`Application is running on: ${await app.getUrl()}`);
 }
 bootstrap();

@@ -1,7 +1,6 @@
 import { Category } from 'src/categories/categories.entity';
 import { OrderHasProducts } from 'src/orders/order_has_products.entity';
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-
 //import { OrderHasProducts } from '../orders/order_has_products.entity';
 
 @Entity({ name: 'products' })
