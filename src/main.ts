@@ -16,6 +16,7 @@ async function bootstrap() {
   app.use(bodyParser.json({ limit: '10mb' }));
   app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 
+  // Global validation pipe to validate incoming requests and DTOs
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
