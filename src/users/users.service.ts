@@ -4,7 +4,7 @@ import { User } from './user.entity';
 import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user-dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import storage = require('../firebase/cloud_storage');
+import { uploadFile, deleteFileByUrl } from '../firebase/cloud_storage'; // Importación corregida
 
 @Injectable()
 export class UsersService {
@@ -32,11 +32,11 @@ export class UsersService {
     return this.userRepository.save(updatedUser);
   }
 
-  // CREAR USUARIO CON IMAGEN
+  // CREAR USUARIO CON IMAGEN - CORREGIDO
   async createWithImage(file: Express.Multer.File, user: CreateUserDto) {
-    const url = await storage(file, file.originalname);
+    const url = await uploadFile(file, 'users'); // Cambiado storage por uploadFile
 
-    if (url === undefined || url === null) {
+    if (!url) {
       throw new HttpException('La imagen no se pudo guardar', HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
@@ -53,12 +53,14 @@ export class UsersService {
       .where('role.id = :roleId', { roleId: 'CLIENT' })
       .getMany();
   }
+
+  // ACTUALIZAR USUARIO CON IMAGEN - CORREGIDO
   async updateWithImage(file: Express.Multer.File, id: number, user: UpdateUserDto) {
-    const url = await storage(file, file.originalname);
+    const url = await uploadFile(file, 'users'); // Cambiado storage por uploadFile
     console.log('URL: ' + url);
     console.log('UserURL: ', user);
 
-    if (url === undefined && url === null) {
+    if (!url) {
       throw new HttpException('La imagen no se pudo guardar', HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
@@ -67,6 +69,12 @@ export class UsersService {
     if (!userFound) {
       throw new HttpException('Usuario no existe', HttpStatus.NOT_FOUND);
     }
+
+    // Eliminar imagen anterior si existe
+    if (userFound.image) {
+      await deleteFileByUrl(userFound.image);
+    }
+
     user.image = url;
     const updatedUser = Object.assign(userFound, user);
     return this.userRepository.save(updatedUser);

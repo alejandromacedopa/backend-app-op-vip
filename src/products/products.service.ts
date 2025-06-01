@@ -1,115 +1,118 @@
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Product } from './product.entity';
 import { Like, Repository } from 'typeorm';
-import storage = require('../firebase/cloud_storage');
-import async_foreach = require('../firebase/async_foreach');
+import { InjectRepository } from '@nestjs/typeorm';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product-dto';
 import { IPaginationOptions, Pagination, paginate } from 'nestjs-typeorm-paginate';
+import { deleteFileByUrl, uploadFile } from 'src/firebase/cloud_storage';
 
 @Injectable()
 export class ProductsService {
   constructor(@InjectRepository(Product) private productsRepository: Repository<Product>) {}
 
-  //todos los productos
   findAll() {
     return this.productsRepository.find();
   }
-  //buscar productos por categoria
+
   findByCategory(id_category: number) {
-    return this.productsRepository.findBy({ id_category: id_category });
+    return this.productsRepository.findBy({ id_category });
   }
+
   async paginate(options: IPaginationOptions): Promise<Pagination<Product>> {
     return paginate<Product>(this.productsRepository, options);
   }
 
-  //buscar productos por nombre
   findByName(name: string) {
     return this.productsRepository.find({ where: { name: Like(`%${name}%`) } });
   }
 
-  //crear productos
+  // ✅ Crear producto con imágenes
   async create(files: Array<Express.Multer.File>, product: CreateProductDto) {
-    if (files.length === 0) {
-      throw new HttpException('Las imagenes son obligatorias', HttpStatus.NOT_FOUND);
+    if (!files || files.length < 2) {
+      throw new HttpException('Debes subir al menos 2 imágenes', HttpStatus.BAD_REQUEST);
     }
 
-    let uploadedFiles = 0; // CONTAR CUANTOS ARCHIVOS SE HAN SUBIDO A FIREBASE
+    if (files.length > 3) {
+      throw new HttpException('Solo puedes subir hasta 3 imágenes', HttpStatus.BAD_REQUEST);
+    }
 
     const newProduct = this.productsRepository.create(product);
     const savedProduct = await this.productsRepository.save(newProduct);
 
-    const startForEach = async () => {
-      await async_foreach(files, async (file: Express.Multer.File) => {
-        const url = await storage(file, file.originalname);
-
-        if (url !== undefined && url !== null) {
-          if (uploadedFiles === 0) {
-            savedProduct.image1 = url;
-          } else if (uploadedFiles === 1) {
-            savedProduct.image2 = url;
-          }
-        }
-
-        await this.update(savedProduct.id, savedProduct);
-        uploadedFiles = uploadedFiles + 1;
-      });
-    };
-    await startForEach();
-    return savedProduct;
-  }
-
-  //actualizar productos
-  async updateWithImages(files: Array<Express.Multer.File>, id: number, product: UpdateProductDto) {
-    if (files.length === 0) {
-      throw new HttpException('Las imagenes son obligatorias', HttpStatus.NOT_FOUND);
+    for (let i = 0; i < files.length; i++) {
+      const url = await uploadFile(files[i], 'products');
+      if (url) {
+        if (i === 0) savedProduct.image1 = url;
+        if (i === 1) savedProduct.image2 = url;
+        if (i === 2) savedProduct.image3 = url;
+      }
     }
 
-    let counter = 0;
-    let uploadedFiles = Number(product.images_to_update[counter]); // CONTAR CUANTOS ARCHIVOS SE HAN SUBIDO A FIREBASE
-
-    const updatedProduct = await this.update(id, product);
-
-    const startForEach = async () => {
-      await async_foreach(files, async (file: Express.Multer.File) => {
-        const url = await storage(file, file.originalname);
-
-        if (url !== undefined && url !== null) {
-          if (uploadedFiles === 0) {
-            updatedProduct.image1 = url;
-          } else if (uploadedFiles === 1) {
-            updatedProduct.image2 = url;
-          }
-        }
-
-        await this.update(updatedProduct.id, updatedProduct);
-        counter++;
-        uploadedFiles = Number(product.images_to_update[counter]);
-      });
-    };
-    await startForEach();
-    return updatedProduct;
+    return this.productsRepository.save(savedProduct);
   }
 
-  async update(id: number, product: UpdateProductDto) {
-    const productFound = await this.productsRepository.findOneBy({ id: id });
-    console.log('Product found: ', productFound);
+  // ✅ Actualizar imágenes específicas
+  async updateWithImages(files: Array<Express.Multer.File>, id: number, product: UpdateProductDto) {
+    if (!files || files.length === 0) {
+      throw new HttpException('Las imágenes son obligatorias', HttpStatus.BAD_REQUEST);
+    }
 
+    const productFound = await this.productsRepository.findOneBy({ id });
     if (!productFound) {
       throw new HttpException('Producto no encontrado', HttpStatus.NOT_FOUND);
     }
-    const updatedProduct = Object.assign(productFound, product);
-    console.log('Product Updated:', updatedProduct);
 
+    const imagesToUpdate = product.images_to_update; // Ej: [0, 1]
+    if (!Array.isArray(imagesToUpdate)) {
+      throw new HttpException(
+        'Debes especificar qué imágenes deseas actualizar',
+        HttpStatus.BAD_REQUEST
+      );
+    }
+
+    for (let i = 0; i < files.length; i++) {
+      const index = Number(imagesToUpdate[i]);
+      if (![0, 1, 2].includes(index)) continue;
+
+      const oldImageUrl =
+        index === 0 ? productFound.image1 : index === 1 ? productFound.image2 : productFound.image3;
+      if (oldImageUrl) await deleteFileByUrl(oldImageUrl);
+
+      const url = await uploadFile(files[i], 'products');
+      if (url) {
+        if (index === 0) productFound.image1 = url;
+        if (index === 1) productFound.image2 = url;
+        if (index === 2) productFound.image3 = url;
+      }
+    }
+
+    const updatedProduct = Object.assign(productFound, product);
     return this.productsRepository.save(updatedProduct);
   }
 
-  async delete(id: number) {
-    const productFound = await this.productsRepository.findOneBy({ id: id });
+  // ✅ Actualizar producto sin imágenes
+  async update(id: number, product: UpdateProductDto) {
+    const productFound = await this.productsRepository.findOneBy({ id });
     if (!productFound) {
       throw new HttpException('Producto no encontrado', HttpStatus.NOT_FOUND);
     }
+
+    const updatedProduct = Object.assign(productFound, product);
+    return this.productsRepository.save(updatedProduct);
+  }
+
+  // ✅ Eliminar producto y sus imágenes del storage
+  async delete(id: number) {
+    const productFound = await this.productsRepository.findOneBy({ id });
+    if (!productFound) {
+      throw new HttpException('Producto no encontrado', HttpStatus.NOT_FOUND);
+    }
+
+    if (productFound.image1) await deleteFileByUrl(productFound.image1);
+    if (productFound.image2) await deleteFileByUrl(productFound.image2);
+    if (productFound.image3) await deleteFileByUrl(productFound.image3);
+
     return this.productsRepository.delete(id);
   }
 }

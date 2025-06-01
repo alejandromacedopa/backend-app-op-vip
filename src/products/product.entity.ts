@@ -20,6 +20,9 @@ export class Product {
   @Column({ nullable: true })
   image2: string;
 
+  @Column({ nullable: true })
+  image3: string;
+
   @Column()
   id_category: number;
 

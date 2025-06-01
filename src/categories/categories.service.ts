@@ -3,8 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Category } from './categories.entity';
 import { Repository } from 'typeorm';
 import { CreateCategoriesDto } from './dto/create-categories.dto';
-import storage = require('../firebase/cloud_storage');
 import { UpdateCategoriesDto } from './dto/update-categories.dto';
+import * as storage from '../firebase/cloud_storage';
 
 @Injectable()
 export class CategoriesService {
@@ -25,7 +25,7 @@ export class CategoriesService {
 
   // CREATE
   async create(file: Express.Multer.File, category: CreateCategoriesDto) {
-    const url = await storage(file, file.originalname);
+    const url = await storage.uploadFile(file, 'categories');
     if (!url) {
       throw new HttpException('La imagen no se pudo guardar', HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -34,7 +34,7 @@ export class CategoriesService {
     return this.categoriesRepository.save(newCategory);
   }
 
-  // UPDATE (sin imagen)
+  // UPDATE sin imagen
   async update(id: number, category: UpdateCategoriesDto) {
     const categoryFound = await this.categoriesRepository.findOneBy({ id });
     if (!categoryFound) {
@@ -47,14 +47,21 @@ export class CategoriesService {
 
   // UPDATE con imagen
   async updateWithImage(file: Express.Multer.File, id: number, category: UpdateCategoriesDto) {
-    const url = await storage(file, file.originalname);
-    if (!url) {
-      throw new HttpException('La imagen no se pudo guardar', HttpStatus.INTERNAL_SERVER_ERROR);
-    }
     const categoryFound = await this.categoriesRepository.findOneBy({ id });
     if (!categoryFound) {
       throw new HttpException('La categoria no existe', HttpStatus.NOT_FOUND);
     }
+
+    // Eliminar imagen anterior (si existe)
+    if (categoryFound.image) {
+      await storage.deleteFileByUrl(categoryFound.image);
+    }
+
+    const url = await storage.uploadFile(file, 'categories');
+    if (!url) {
+      throw new HttpException('La imagen no se pudo guardar', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
     categoryFound.updated_at = new Date();
     category.image = url;
     const updatedCategory = Object.assign(categoryFound, category);
@@ -67,6 +74,12 @@ export class CategoriesService {
     if (!categoryFound) {
       throw new HttpException('La categoria no existe', HttpStatus.NOT_FOUND);
     }
+
+    // Eliminar imagen asociada si existe
+    if (categoryFound.image) {
+      await storage.deleteFileByUrl(categoryFound.image);
+    }
+
     return this.categoriesRepository.delete(id);
   }
 }
