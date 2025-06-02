@@ -11,10 +11,11 @@ import { deleteFileByUrl, uploadFile } from 'src/firebase/cloud_storage';
 export class ProductsService {
   constructor(@InjectRepository(Product) private productsRepository: Repository<Product>) {}
 
+  // LIST
   findAll() {
     return this.productsRepository.find();
   }
-
+  // LIST FOR CATEGORY
   findByCategory(id_category: number) {
     return this.productsRepository.findBy({ id_category });
   }
@@ -27,7 +28,7 @@ export class ProductsService {
     return this.productsRepository.find({ where: { name: Like(`%${name}%`) } });
   }
 
-  // ✅ Crear producto con imágenes
+  // CREATE PRODUCTS WITH IMAGES
   async create(files: Array<Express.Multer.File>, product: CreateProductDto) {
     if (!files || files.length < 2) {
       throw new HttpException('Debes subir al menos 2 imágenes', HttpStatus.BAD_REQUEST);

@@ -14,3 +14,6 @@
 - Puede darse el caso de que el mismo error se repita, para esto se puede ejecutar el comando
 - npm run build                                                                                                       ok 
 - nest build
+
+# DEPENDENCIA PARA AUTOMATISAR EL CAMBIO DE DESCUENTO A PRODUCTS
+- npm install @nestjs/schedule

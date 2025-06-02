@@ -69,13 +69,13 @@ export class ProductsController {
   @HasRoles(JwtRole.ADMIN)
   @UseGuards(JwtAuthGuard, JwtRolesGuard)
   @Post() // http:localhost:3000/categories -> POST
-  @UseInterceptors(FilesInterceptor('files[]', 2))
+  @UseInterceptors(FilesInterceptor('files[]', 3))
   create(
     @UploadedFiles(
       new ParseFilePipe({
         validators: [
           new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 10 }),
-          new FileTypeValidator({ fileType: /\.(png|jpeg|jpg)$/ }),
+          new FileTypeValidator({ fileType: '.(png|jpeg|jpg)' }),
         ],
       })
     )
@@ -91,7 +91,7 @@ export class ProductsController {
   @HasRoles(JwtRole.ADMIN)
   @UseGuards(JwtAuthGuard, JwtRolesGuard)
   @Put('upload/:id') // http:localhost:3000/categories -> PUT
-  @UseInterceptors(FilesInterceptor('files[]', 2))
+  @UseInterceptors(FilesInterceptor('files[]', 3))
   updateWithImage(
     @UploadedFiles(
       new ParseFilePipe({

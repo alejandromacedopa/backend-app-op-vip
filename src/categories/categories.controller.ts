@@ -35,7 +35,7 @@ export class CategoriesController {
     return this.CategoriesService.findAll();
   }
 
-  @HasRoles(JwtRole.ADMIN)
+  @HasRoles(JwtRole.ADMIN, JwtRole.CLIENT)
   @UseGuards(JwtAuthGuard, JwtRolesGuard)
   @Get(':id')
   findById(@Param('id', ParseIntPipe) id: number) {

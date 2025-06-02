@@ -52,7 +52,7 @@ export class CategoriesService {
       throw new HttpException('La categoria no existe', HttpStatus.NOT_FOUND);
     }
 
-    // Eliminar imagen anterior (si existe)
+    // DELETE IMAGE IF EXISTS
     if (categoryFound.image) {
       await storage.deleteFileByUrl(categoryFound.image);
     }
