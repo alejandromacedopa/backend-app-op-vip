@@ -47,7 +47,7 @@ export class AuthService {
 
     const userSaved = await this.userRepository.save(newUser);
 
-    const rolesString = userSaved.roles.map(rol => rol.id); //['CLIENT', 'ADMIN']
+    const rolesString = userSaved.roles.map(rol => rol.id); //['CLIENT', 'ADMIN', 'SUPER_ADMIN']
     const payload = { id: userSaved.id, name: userSaved.name, roles: rolesString };
     const token = this.jwtService.sign(payload);
     const data = {

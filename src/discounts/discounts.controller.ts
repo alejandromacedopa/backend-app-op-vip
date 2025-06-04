@@ -11,7 +11,7 @@ import { JwtRolesGuard } from 'src/auth/jwt/jwt-roles.guard';
 export class DiscountsController {
   constructor(private readonly discountsService: DiscountsService) {}
 
-  @HasRoles(JwtRole.ADMIN, JwtRole.CLIENT)
+  @HasRoles(JwtRole.ADMIN)
   @UseGuards(JwtAuthGuard, JwtRolesGuard)
   @Post()
   create(@Body() dto: CreateDiscountDto) {
@@ -32,14 +32,14 @@ export class DiscountsController {
     return this.discountsService.findOne(+id);
   }
 
-  @HasRoles(JwtRole.ADMIN, JwtRole.CLIENT)
+  @HasRoles(JwtRole.ADMIN)
   @UseGuards(JwtAuthGuard, JwtRolesGuard)
   @Patch(':id')
   update(@Param('id') id: string, @Body() dto: UpdateDiscountDto) {
     return this.discountsService.update(+id, dto);
   }
 
-  @HasRoles(JwtRole.ADMIN, JwtRole.CLIENT)
+  @HasRoles(JwtRole.ADMIN)
   @UseGuards(JwtAuthGuard, JwtRolesGuard)
   @Delete(':id')
   remove(@Param('id') id: string) {
