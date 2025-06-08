@@ -16,6 +16,9 @@ export class Order {
   @Column()
   id_address: number;
 
+  @Column({ nullable: false })
+  phoneNumber: string;
+
   @Column({ default: 'PAGADO' })
   status: string;
 

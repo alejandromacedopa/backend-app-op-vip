@@ -28,6 +28,9 @@ export class Product {
   image3: string;
 
   @Column({ nullable: true })
+  image4: string;
+
+  @Column({ nullable: true })
   id_category: number;
 
   @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })

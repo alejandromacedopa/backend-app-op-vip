@@ -28,15 +28,11 @@ import { UpdateCategoriesDto } from './dto/update-categories.dto';
 export class CategoriesController {
   constructor(private CategoriesService: CategoriesService) {}
 
-  @HasRoles(JwtRole.ADMIN)
-  @UseGuards(JwtAuthGuard, JwtRolesGuard)
   @Get()
   findAll() {
     return this.CategoriesService.findAll();
   }
 
-  @HasRoles(JwtRole.ADMIN, JwtRole.CLIENT)
-  @UseGuards(JwtAuthGuard, JwtRolesGuard)
   @Get(':id')
   findById(@Param('id', ParseIntPipe) id: number) {
     return this.CategoriesService.findById(id);
@@ -87,7 +83,7 @@ export class CategoriesController {
     }
   }
 
-  @HasRoles(JwtRole.ADMIN)
+  @HasRoles(JwtRole.ADMIN, JwtRole.SUPER_ADMIN)
   @UseGuards(JwtAuthGuard, JwtRolesGuard)
   @Delete(':id')
   delete(@Param('id', ParseIntPipe) id: number) {

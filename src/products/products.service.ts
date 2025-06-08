@@ -13,29 +13,37 @@ export class ProductsService {
 
   // LIST
   findAll() {
-    return this.productsRepository.find();
+    return this.productsRepository.find({
+      relations: ['category'], // ← Esto carga la relación
+    });
   }
   // LIST FOR CATEGORY
   findByCategory(id_category: number) {
-    return this.productsRepository.findBy({ id_category });
+    return this.productsRepository.find({
+      where: { id_category },
+      relations: ['category'], // ← Esto carga la relación
+    });
   }
 
   async paginate(options: IPaginationOptions): Promise<Pagination<Product>> {
-    return paginate<Product>(this.productsRepository, options);
+    return paginate<Product>(this.productsRepository, options, {
+      relations: ['category'], // ← Esto carga la relación
+    });
   }
 
   findByName(name: string) {
-    return this.productsRepository.find({ where: { name: Like(`%${name}%`) } });
+    return this.productsRepository.find({
+      where: { name: Like(`%${name}%`) },
+      relations: ['category'], // ← Esto carga la relación
+    });
   }
-
   // CREATE PRODUCTS WITH IMAGES
   async create(files: Array<Express.Multer.File>, product: CreateProductDto) {
     if (!files || files.length < 2) {
       throw new HttpException('Debes subir al menos 2 imágenes', HttpStatus.BAD_REQUEST);
     }
-
-    if (files.length > 3) {
-      throw new HttpException('Solo puedes subir hasta 3 imágenes', HttpStatus.BAD_REQUEST);
+    if (files.length > 4) {
+      throw new HttpException('Solo puedes subir hasta 4 imágenes', HttpStatus.BAD_REQUEST);
     }
 
     const newProduct = this.productsRepository.create(product);
@@ -47,6 +55,7 @@ export class ProductsService {
         if (i === 0) savedProduct.image1 = url;
         if (i === 1) savedProduct.image2 = url;
         if (i === 2) savedProduct.image3 = url;
+        if (i === 3) savedProduct.image4 = url;
       }
     }
 
@@ -74,10 +83,17 @@ export class ProductsService {
 
     for (let i = 0; i < files.length; i++) {
       const index = Number(imagesToUpdate[i]);
-      if (![0, 1, 2].includes(index)) continue;
+      if (![0, 1, 2, 3].includes(index)) continue;
 
       const oldImageUrl =
-        index === 0 ? productFound.image1 : index === 1 ? productFound.image2 : productFound.image3;
+        index === 0
+          ? productFound.image1
+          : index === 1
+            ? productFound.image2
+            : index === 2
+              ? productFound.image3
+              : productFound.image4;
+
       if (oldImageUrl) await deleteFileByUrl(oldImageUrl);
 
       const url = await uploadFile(files[i], 'products');
@@ -85,6 +101,7 @@ export class ProductsService {
         if (index === 0) productFound.image1 = url;
         if (index === 1) productFound.image2 = url;
         if (index === 2) productFound.image3 = url;
+        if (index === 3) productFound.image4 = url;
       }
     }
 
@@ -113,6 +130,7 @@ export class ProductsService {
     if (productFound.image1) await deleteFileByUrl(productFound.image1);
     if (productFound.image2) await deleteFileByUrl(productFound.image2);
     if (productFound.image3) await deleteFileByUrl(productFound.image3);
+    if (productFound.image4) await deleteFileByUrl(productFound.image4);
 
     return this.productsRepository.delete(id);
   }

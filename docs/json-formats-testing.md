@@ -50,3 +50,16 @@
   "email": "admin123@gmail.com",
   "password": "admin123",
 }
+
+## Discounts
+
+- RUTA: http://localhost:3000/discounts
+{
+  "name": "Descuento de prueba",
+  "description": "20% OFF por lanzamiento",
+  "slogan": "¡Aprovecha ya!",
+  "amount": 20.00,
+  "startDate": "2025-06-02T00:00:00.000Z",
+  "endDate": "2025-06-10T23:59:59.000Z",
+  "productId": 4
+}

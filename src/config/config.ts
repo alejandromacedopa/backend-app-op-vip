@@ -6,4 +6,4 @@ export const MERCADO_PAGO_HEADERS = {
   'X-Idempotency-Key': uuidv4(),
 };
 
-export const API = '192.168.246.1';
+export const API = 'localhost'; //cambiar cunado se suba a produccion

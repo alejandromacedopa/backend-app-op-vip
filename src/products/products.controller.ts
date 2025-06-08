@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  DefaultValuePipe,
   Delete,
   FileTypeValidator,
   Get,
@@ -10,6 +11,7 @@ import {
   ParseIntPipe,
   Post,
   Put,
+  Query,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
@@ -24,6 +26,9 @@ import { JwtRolesGuard } from 'src/auth/jwt/jwt-roles.guard';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product-dto';
+import { Pagination } from 'nestjs-typeorm-paginate';
+import { Product } from './product.entity';
+import { API } from 'src/config/config';
 
 @Controller('products')
 export class ProductsController {
@@ -37,30 +42,26 @@ export class ProductsController {
   }
 
   // USO DE PAGINACION PARA CUANDO LA CANTIDAD DE DATOS EN LA BD SEA ELEVADA,OARA NO CARGAR TODOS LOS DATOS USAR PAGINACION
-  /*
-    @HasRoles(JwtRole.ADMIN, JwtRole.CLIENT)
-    @UseGuards(JwtAuthGuard, JwtRolesGuard)
-    @Get('pagination') // http:localhost:3000/categories -> GET
-    async pagination(
-        @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
-        @Query('limit', new DefaultValuePipe(5), ParseIntPipe) limit: number = 5,
-    ): Promise<Pagination<Product>> {
-        return this.productsService.paginate({
-            page,
-            limit,
-            route: `http://${API}:3000/products/pagination`
-        });
-    }*/
 
   @HasRoles(JwtRole.ADMIN, JwtRole.CLIENT)
   @UseGuards(JwtAuthGuard, JwtRolesGuard)
+  @Get('pagination') // http:localhost:3000/categories -> GET
+  async pagination(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
+    @Query('limit', new DefaultValuePipe(8), ParseIntPipe) limit: number = 8
+  ): Promise<Pagination<Product>> {
+    return this.productsService.paginate({
+      page,
+      limit,
+      route: `http://${API}:3000/products/pagination`,
+    });
+  }
+
   @Get('category/:id_category') // http:localhost:3000/categories -> GET
   findByCategory(@Param('id_category', ParseIntPipe) id_category: number) {
     return this.productsService.findByCategory(id_category);
   }
 
-  @HasRoles(JwtRole.ADMIN, JwtRole.CLIENT)
-  @UseGuards(JwtAuthGuard, JwtRolesGuard)
   @Get('search/:name') // http:localhost:3000/categories -> GET
   findByName(@Param('name') name: string) {
     return this.productsService.findByName(name);
@@ -69,12 +70,12 @@ export class ProductsController {
   @HasRoles(JwtRole.ADMIN)
   @UseGuards(JwtAuthGuard, JwtRolesGuard)
   @Post() // http:localhost:3000/categories -> POST
-  @UseInterceptors(FilesInterceptor('files[]', 3))
+  @UseInterceptors(FilesInterceptor('files[]', 4)) // Max 4 files
   create(
     @UploadedFiles(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 10 }),
+          new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 5 }), // 5MB por imagen
           new FileTypeValidator({ fileType: '.(png|jpeg|jpg)' }),
         ],
       })
@@ -91,12 +92,12 @@ export class ProductsController {
   @HasRoles(JwtRole.ADMIN)
   @UseGuards(JwtAuthGuard, JwtRolesGuard)
   @Put('upload/:id') // http:localhost:3000/categories -> PUT
-  @UseInterceptors(FilesInterceptor('files[]', 3))
+  @UseInterceptors(FilesInterceptor('files[]', 4)) // Max 4 files
   updateWithImage(
     @UploadedFiles(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 10 }),
+          new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 5 }), // 5MB por imagen
           new FileTypeValidator({ fileType: '.(png|jpeg|jpg)' }),
         ],
       })
