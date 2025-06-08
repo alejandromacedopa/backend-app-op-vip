@@ -41,10 +41,6 @@ export class ProductsController {
     return this.productsService.findAll();
   }
 
-  // USO DE PAGINACION PARA CUANDO LA CANTIDAD DE DATOS EN LA BD SEA ELEVADA,OARA NO CARGAR TODOS LOS DATOS USAR PAGINACION
-
-  @HasRoles(JwtRole.ADMIN, JwtRole.CLIENT)
-  @UseGuards(JwtAuthGuard, JwtRolesGuard)
   @Get('pagination') // http:localhost:3000/categories -> GET
   async pagination(
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number = 1,
