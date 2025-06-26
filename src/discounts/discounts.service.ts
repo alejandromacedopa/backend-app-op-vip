@@ -6,6 +6,7 @@ import { Product } from 'src/products/product.entity';
 import { CreateDiscountDto } from './dto/create-discount-dto';
 import { UpdateDiscountDto } from './dto/update-discount-dto';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { DiscountStatus } from './status/discount-status';
 
 @Injectable()
 export class DiscountsService {
@@ -21,12 +22,26 @@ export class DiscountsService {
     const product = await this.productRepo.findOneBy({ id: dto.productId });
     if (!product) throw new NotFoundException('Producto no encontrado');
 
-    // Aplicar el descuento directamente al precio
-    product.price = Number(product.price) - Number(dto.amount);
-    await this.productRepo.save(product);
+    const now = new Date();
+    const isActiveNow = now >= dto.startDate && now <= dto.endDate;
 
-    const discount = this.discountRepo.create({ ...dto, product });
-    return this.discountRepo.save(discount);
+    const discount = this.discountRepo.create({
+      ...dto,
+      product,
+      status: isActiveNow ? DiscountStatus.ACTIVE : DiscountStatus.PENDING,
+      applied: false,
+    });
+
+    const saved = await this.discountRepo.save(discount);
+
+    if (isActiveNow) {
+      product.price = Number(product.price) - Number(discount.amount);
+      saved.applied = true;
+      await this.productRepo.save(product);
+      await this.discountRepo.save(saved);
+    }
+
+    return saved;
   }
 
   findAll(): Promise<Discount[]> {
@@ -34,26 +49,56 @@ export class DiscountsService {
   }
 
   async findOne(id: number): Promise<Discount> {
-    const discount = await this.discountRepo.findOneBy({ id });
+    const discount = await this.discountRepo.findOne({
+      where: { id },
+      relations: ['product'],
+    });
     if (!discount) throw new NotFoundException('Descuento no encontrado');
     return discount;
   }
 
   async update(id: number, dto: UpdateDiscountDto): Promise<Discount> {
     const discount = await this.findOne(id);
+    const now = new Date();
 
-    if (dto.productId) {
-      const product = await this.productRepo.findOneBy({ id: dto.productId });
-      if (!product) throw new NotFoundException('Producto no encontrado');
-      discount.product = product;
+    const isActiveNow =
+      now >= discount.startDate &&
+      now <= discount.endDate &&
+      discount.status === DiscountStatus.ACTIVE;
+
+    // Si cambia de producto
+    if (dto.productId && dto.productId !== discount.product.id) {
+      if (discount.applied) {
+        discount.product.price = Number(discount.product.price) + Number(discount.amount);
+        await this.productRepo.save(discount.product);
+        discount.applied = false;
+      }
+
+      const newProduct = await this.productRepo.findOneBy({ id: dto.productId });
+      if (!newProduct) throw new NotFoundException('Producto no encontrado');
+      discount.product = newProduct;
+
+      if (isActiveNow) {
+        newProduct.price = Number(newProduct.price) - Number(discount.amount);
+        discount.applied = true;
+        await this.productRepo.save(newProduct);
+      }
     }
 
+    // Actualizar campos del descuento
     Object.assign(discount, dto);
+
     return this.discountRepo.save(discount);
   }
 
   async remove(id: number): Promise<void> {
     const discount = await this.findOne(id);
+
+    if (discount.applied) {
+      discount.product.price = Number(discount.product.price) + Number(discount.amount);
+      await this.productRepo.save(discount.product);
+    }
+
     await this.discountRepo.remove(discount);
   }
 
@@ -65,30 +110,52 @@ export class DiscountsService {
         startDate: LessThanOrEqual(now),
         endDate: MoreThanOrEqual(now),
       },
-      order: { amount: 'DESC' }, // por si hay varios, toma el mayor
+      order: { amount: 'DESC' },
     });
 
     return discount ? discount.amount : null;
   }
 
+  // ⏱️ CRON para actualizar estados de descuentos automáticamente
   @Cron(CronExpression.EVERY_MINUTE)
-  async handleExpiredDiscounts() {
+  async handleDiscountStatusUpdate() {
     const now = new Date();
 
-    const expiredDiscounts = await this.discountRepo.find({
-      where: { endDate: LessThanOrEqual(now) },
+    const allDiscounts = await this.discountRepo.find({
       relations: ['product'],
     });
 
-    for (const discount of expiredDiscounts) {
+    for (const discount of allDiscounts) {
       const product = discount.product;
 
-      // Revertir el precio original del producto
-      product.price = Number(product.price) + Number(discount.amount);
-      await this.productRepo.save(product);
+      if (now < discount.startDate) {
+        if (discount.status !== DiscountStatus.PENDING) {
+          discount.status = DiscountStatus.PENDING;
+          discount.applied = false;
+        }
+      } else if (now >= discount.startDate && now <= discount.endDate) {
+        if (discount.status !== DiscountStatus.ACTIVE) {
+          discount.status = DiscountStatus.ACTIVE;
+        }
 
-      // Eliminar el descuento
-      await this.discountRepo.remove(discount);
+        if (!discount.applied) {
+          product.price = Number(product.price) - Number(discount.amount);
+          discount.applied = true;
+          await this.productRepo.save(product);
+        }
+      } else if (now > discount.endDate) {
+        if (discount.status !== DiscountStatus.EXPIRED) {
+          discount.status = DiscountStatus.EXPIRED;
+        }
+
+        if (discount.applied) {
+          product.price = Number(product.price) + Number(discount.amount);
+          discount.applied = false;
+          await this.productRepo.save(product);
+        }
+      }
+
+      await this.discountRepo.save(discount);
     }
   }
 }

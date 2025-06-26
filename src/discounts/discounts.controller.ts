@@ -18,15 +18,11 @@ export class DiscountsController {
     return this.discountsService.create(dto);
   }
 
-  @HasRoles(JwtRole.ADMIN, JwtRole.CLIENT)
-  @UseGuards(JwtAuthGuard, JwtRolesGuard)
   @Get()
   findAll() {
     return this.discountsService.findAll();
   }
 
-  @HasRoles(JwtRole.ADMIN, JwtRole.CLIENT)
-  @UseGuards(JwtAuthGuard, JwtRolesGuard)
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.discountsService.findOne(+id);

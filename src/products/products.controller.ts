@@ -34,8 +34,6 @@ import { API } from 'src/config/config';
 export class ProductsController {
   constructor(private productsService: ProductsService) {}
 
-  @HasRoles(JwtRole.ADMIN, JwtRole.CLIENT)
-  @UseGuards(JwtAuthGuard, JwtRolesGuard)
   @Get() // http:localhost:3000/products -> GET
   findAll() {
     return this.productsService.findAll();

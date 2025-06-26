@@ -12,6 +12,7 @@ import { MercadoPagoModule } from './mercado_pago/mercado_pago.module';
 import { OrdersModule } from './orders/orders.module';
 import { StockModule } from './stock/stock.module';
 import { DiscountsModule } from './discounts/discounts.module';
+import { CarouselModule } from './carousel/carousel.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { DiscountsModule } from './discounts/discounts.module';
     OrdersModule,
     StockModule,
     DiscountsModule,
+    CarouselModule,
   ],
   controllers: [AppController],
   providers: [AppService],

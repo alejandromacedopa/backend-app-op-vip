@@ -8,6 +8,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
+import { DiscountStatus } from './status/discount-status';
 
 @Entity('discounts')
 export class Discount {
@@ -35,6 +36,12 @@ export class Discount {
   @ManyToOne(() => Product, product => product.discounts, { eager: true })
   @JoinColumn({ name: 'product_id' })
   product: Product;
+
+  @Column({ type: 'enum', enum: DiscountStatus, default: DiscountStatus.PENDING })
+  status: DiscountStatus;
+
+  @Column({ default: false })
+  applied: boolean;
 
   @Column({ type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
   @CreateDateColumn()
