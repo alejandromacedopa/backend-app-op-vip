@@ -1,9 +1,10 @@
-import { Controller, Get, Param, ParseIntPipe, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Put, UseGuards } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { JwtRole } from 'src/auth/jwt/jwt-role';
 import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
 import { JwtRolesGuard } from 'src/auth/jwt/jwt-roles.guard';
 import { HasRoles } from 'src/auth/jwt/has-roles';
+import { CreateOrderDto } from './dto/create-order.dto';
 
 @Controller('orders')
 export class OrdersController {
@@ -31,4 +32,12 @@ export class OrdersController {
         return this.ordersService.updateStatus(id);
     }
 
+    @HasRoles(JwtRole.CLIENT, JwtRole.ADMIN)
+    @UseGuards(JwtAuthGuard, JwtRolesGuard)
+    @Post()
+    create(@Body() createOrderDto: CreateOrderDto) {
+        return this.ordersService.create(createOrderDto);
+    }
 }
+    
+

@@ -30,7 +30,7 @@ export class Discount {
   @Column({ type: 'timestamp' })
   startDate: Date;
 
-  @Column({ type: 'timestamp' })
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   endDate: Date;
 
   @ManyToOne(() => Product, product => product.discounts, { eager: true })
