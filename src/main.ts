@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
+import * as cors from 'cors';
 import * as bodyParser from 'body-parser';
 
 async function bootstrap() {
@@ -29,9 +30,8 @@ async function bootstrap() {
     })
   );
 
-  await app.listen(3000);
-  console.log(`✅ App is running on: ${await app.getUrl()}`);
-  console.log('🔍 DB_HOST desde process.env:', process.env.DB_HOST);
-  console.log('🌐 DB_HOST:', process.env.DB_HOST); // útil para debug en Railway
+  app.useGlobalPipes(new ValidationPipe({ forbidUnknownValues: false }));
+  app.use(cors());
+  await app.listen(process.env.PORT || 3001);
 }
 bootstrap();
