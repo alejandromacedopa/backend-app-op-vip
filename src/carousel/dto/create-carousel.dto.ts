@@ -1,4 +1,4 @@
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class CreateCarouselDto {
   @IsOptional()
@@ -29,4 +29,8 @@ export class CreateCarouselDto {
   @IsOptional()
   @IsString()
   image5?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  is_enabled?: boolean;
 }

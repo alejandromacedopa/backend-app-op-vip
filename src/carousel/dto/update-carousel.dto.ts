@@ -26,19 +26,19 @@ export class UpdateCarouselDto {
 
   @IsOptional()
   @IsString()
-  image2?: string;
+  image2?: string | null;
 
   @IsOptional()
   @IsString()
-  image3?: string;
+  image3?: string | null;
 
   @IsOptional()
   @IsString()
-  image4?: string;
+  image4?: string | null;
 
   @IsOptional()
   @IsString()
-  image5?: string;
+  image5?: string | null;
 
   @IsOptional()
   @IsArray()
@@ -48,4 +48,13 @@ export class UpdateCarouselDto {
   @Min(0, { each: true })
   @Max(4, { each: true })
   images_to_update?: number[];
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(5)
+  @IsInt({ each: true })
+  @Min(0, { each: true })
+  @Max(4, { each: true })
+  images_to_delete?: number[];
 }
