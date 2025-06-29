@@ -16,7 +16,6 @@ async function bootstrap() {
   app.use(bodyParser.json({ limit: '10mb' }));
   app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
 
-  // Global validation pipe to validate incoming requests and DTOs
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -30,9 +29,8 @@ async function bootstrap() {
     })
   );
 
-  //TEST
-
   await app.listen(3000);
-  console.log(`Application is running on: ${await app.getUrl()}`);
+  console.log(`✅ App is running on: ${await app.getUrl()}`);
+  console.log('🌐 DB_HOST:', process.env.DB_HOST); // útil para debug en Railway
 }
 bootstrap();
