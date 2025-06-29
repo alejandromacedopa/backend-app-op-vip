@@ -17,6 +17,20 @@ export class ProductsService {
       relations: ['category'], // ← Esto carga la relación
     });
   }
+
+  async findById(id: number): Promise<Product> {
+    const product = await this.productsRepository.findOne({
+      where: { id },
+      relations: ['category'],
+    });
+
+    if (!product) {
+      throw new HttpException('Producto no encontrado', HttpStatus.NOT_FOUND);
+    }
+
+    return product;
+  }
+
   // LIST FOR CATEGORY
   findByCategory(id_category: number) {
     return this.productsRepository.find({
@@ -61,59 +75,46 @@ export class ProductsService {
 
     return this.productsRepository.save(savedProduct);
   }
-
-  // ✅ Actualizar imágenes específicas
-  async updateWithImages(files: Array<Express.Multer.File>, id: number, product: UpdateProductDto) {
-    if (!files || files.length === 0) {
-      throw new HttpException('Las imágenes son obligatorias', HttpStatus.BAD_REQUEST);
-    }
-
+  async update(id: number, product: UpdateProductDto, files?: Array<Express.Multer.File>) {
     const productFound = await this.productsRepository.findOneBy({ id });
     if (!productFound) {
       throw new HttpException('Producto no encontrado', HttpStatus.NOT_FOUND);
     }
 
-    const imagesToUpdate = product.images_to_update; // Ej: [0, 1]
-    if (!Array.isArray(imagesToUpdate)) {
-      throw new HttpException(
-        'Debes especificar qué imágenes deseas actualizar',
-        HttpStatus.BAD_REQUEST
-      );
-    }
+    // Actualiza imágenes si se recibieron archivos y se especificó `images_to_update`
+    if (files && files.length > 0) {
+      const indices = product.images_to_update;
 
-    for (let i = 0; i < files.length; i++) {
-      const index = Number(imagesToUpdate[i]);
-      if (![0, 1, 2, 3].includes(index)) continue;
-
-      const oldImageUrl =
-        index === 0
-          ? productFound.image1
-          : index === 1
-            ? productFound.image2
-            : index === 2
-              ? productFound.image3
-              : productFound.image4;
-
-      if (oldImageUrl) await deleteFileByUrl(oldImageUrl);
-
-      const url = await uploadFile(files[i], 'products');
-      if (url) {
-        if (index === 0) productFound.image1 = url;
-        if (index === 1) productFound.image2 = url;
-        if (index === 2) productFound.image3 = url;
-        if (index === 3) productFound.image4 = url;
+      if (!Array.isArray(indices)) {
+        throw new HttpException(
+          'Debes especificar qué imágenes actualizar',
+          HttpStatus.BAD_REQUEST
+        );
       }
-    }
 
-    const updatedProduct = Object.assign(productFound, product);
-    return this.productsRepository.save(updatedProduct);
-  }
+      for (let i = 0; i < files.length; i++) {
+        const index = Number(indices[i]);
+        if (![0, 1, 2, 3].includes(index)) continue;
 
-  // ✅ Actualizar producto sin imágenes
-  async update(id: number, product: UpdateProductDto) {
-    const productFound = await this.productsRepository.findOneBy({ id });
-    if (!productFound) {
-      throw new HttpException('Producto no encontrado', HttpStatus.NOT_FOUND);
+        const oldImageUrl =
+          index === 0
+            ? productFound.image1
+            : index === 1
+              ? productFound.image2
+              : index === 2
+                ? productFound.image3
+                : productFound.image4;
+
+        if (oldImageUrl) await deleteFileByUrl(oldImageUrl);
+
+        const url = await uploadFile(files[i], 'products');
+        if (url) {
+          if (index === 0) productFound.image1 = url;
+          if (index === 1) productFound.image2 = url;
+          if (index === 2) productFound.image3 = url;
+          if (index === 3) productFound.image4 = url;
+        }
+      }
     }
 
     const updatedProduct = Object.assign(productFound, product);

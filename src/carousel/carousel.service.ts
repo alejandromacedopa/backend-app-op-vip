@@ -13,11 +13,22 @@ export class CarouselService {
     private readonly carouselRepository: Repository<Carousel>
   ) {}
 
-  // Listar todos los elementos del carrusel
+  // Listar todos los elementos del carrusel ACTIVOS
   findAll(): Promise<Carousel[]> {
-    return this.carouselRepository.find();
+    return this.carouselRepository.find({
+      where: { is_enabled: true },
+      order: { createdAt: 'DESC' },
+    });
   }
 
+  // Listar todos los elementos del carrousel activos y desactivados para el admin
+  findAllAdmin(): Promise<Carousel[]> {
+    return this.carouselRepository.find({
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  //LISTAR
   // Buscar por título
   findByTitle(title: string): Promise<Carousel[]> {
     return this.carouselRepository.find({
@@ -51,55 +62,70 @@ export class CarouselService {
     return this.carouselRepository.save(saved);
   }
 
-  async updateWithImages(
-    files: Express.Multer.File[],
+  async updateUnified(
     id: number,
-    dto: UpdateCarouselDto & { images_to_update: number[] }
+    dto: UpdateCarouselDto & { images_to_update?: number[]; images_to_delete?: number[] },
+    files: Express.Multer.File[]
   ): Promise<Carousel> {
-    if (!files || files.length === 0) {
-      throw new HttpException('Debes subir al menos una imagen', HttpStatus.BAD_REQUEST);
-    }
-
     const carousel = await this.carouselRepository.findOneBy({ id });
     if (!carousel) {
       throw new HttpException('Carrusel no encontrado', HttpStatus.NOT_FOUND);
     }
 
-    const indices = dto.images_to_update;
-    if (!Array.isArray(indices) || indices.length !== files.length) {
-      throw new HttpException(
-        'Los índices de imágenes no coinciden con los archivos enviados',
-        HttpStatus.BAD_REQUEST
-      );
+    if (Array.isArray(dto.images_to_delete)) {
+      for (const index of dto.images_to_delete) {
+        if (index < 0 || index > 4) continue;
+
+        const key = `image${index + 1}` as keyof Carousel;
+        const currentUrl = carousel[key] as string | null;
+        if (currentUrl) {
+          console.log(`🗑️ Eliminando imagen en índice ${index}: ${currentUrl}`);
+          await deleteFileByUrl(currentUrl);
+          (carousel as any)[key] = null;
+        }
+      }
     }
 
-    for (let i = 0; i < files.length; i++) {
-      const index = indices[i];
-      if (index < 0 || index > 4) continue;
+    if (files && files.length > 0 && dto.images_to_update) {
+      const indices = dto.images_to_update;
+      if (!Array.isArray(indices) || indices.length !== files.length) {
+        throw new HttpException(
+          'Los índices de imágenes no coinciden con los archivos enviados',
+          HttpStatus.BAD_REQUEST
+        );
+      }
 
-      const currentUrl = carousel[`image${index + 1}`];
-      if (currentUrl) await deleteFileByUrl(currentUrl);
+      for (let i = 0; i < files.length; i++) {
+        const index = indices[i];
+        if (index < 0 || index > 4) continue;
 
-      const newUrl = await uploadFile(files[i], 'carousel');
-      carousel[`image${index + 1}`] = newUrl;
+        const key = `image${index + 1}` as keyof Carousel;
+        const currentUrl = carousel[key] as string | null;
+        if (currentUrl) await deleteFileByUrl(currentUrl);
+
+        const newUrl = await uploadFile(files[i], 'carousel');
+        (carousel as any)[key] = newUrl;
+      }
     }
 
-    // Eliminar del DTO la propiedad temporal `images_to_update` antes de asignar
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { images_to_update, ...restDto } = dto;
+    const restDto = { ...dto };
+    delete restDto.images_to_update;
+    delete restDto.images_to_delete;
+
     Object.assign(carousel, restDto);
 
     return this.carouselRepository.save(carousel);
   }
 
-  async update(id: number, dto: UpdateCarouselDto): Promise<Carousel> {
+  //CAMBIAR ESTADO DEL CARROUSELL DESDE UN BOTON
+  async toggleStatus(id: number, is_enabled: boolean): Promise<Carousel> {
     const carousel = await this.carouselRepository.findOneBy({ id });
     if (!carousel) {
       throw new HttpException('Carrusel no encontrado', HttpStatus.NOT_FOUND);
     }
 
-    Object.assign(carousel, dto);
-    return this.carouselRepository.save(carousel);
+    carousel.is_enabled = is_enabled;
+    return await this.carouselRepository.save(carousel);
   }
 
   // Eliminar elemento del carrusel y sus imágenes

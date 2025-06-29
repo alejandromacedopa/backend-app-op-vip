@@ -12,14 +12,17 @@ export class Carousel {
   id: number;
 
   @Column({ nullable: true })
-  title?: string;
+  title: string;
 
   @Column({ nullable: true })
-  description?: string;
+  description: string;
+
+  @Column({ default: true })
+  is_enabled: boolean;
 
   @Column({ nullable: true })
   image1: string;
-
+  // SOLO LA IMAGEN 1 ES OBLIGATORIO
   @Column({ nullable: true })
   image2?: string;
 

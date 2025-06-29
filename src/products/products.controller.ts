@@ -21,8 +21,6 @@ import { HasRoles } from 'src/auth/jwt/has-roles';
 import { JwtRole } from 'src/auth/jwt/jwt-role';
 import { JwtAuthGuard } from 'src/auth/jwt/jwt.guard';
 import { JwtRolesGuard } from 'src/auth/jwt/jwt-roles.guard';
-// import { Pagination } from 'nestjs-typeorm-paginate';
-// import { Product } from './product.entity';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product-dto';
@@ -61,6 +59,11 @@ export class ProductsController {
     return this.productsService.findByName(name);
   }
 
+  @Get(':id') // http://localhost:3000/products/1
+  findById(@Param('id', ParseIntPipe) id: number) {
+    return this.productsService.findById(id);
+  }
+
   @HasRoles(JwtRole.ADMIN)
   @UseGuards(JwtAuthGuard, JwtRolesGuard)
   @Post() // http:localhost:3000/categories -> POST
@@ -83,33 +86,37 @@ export class ProductsController {
     return this.productsService.create(files, product);
   }
 
-  @HasRoles(JwtRole.ADMIN)
+  @Put(':id')
   @UseGuards(JwtAuthGuard, JwtRolesGuard)
-  @Put('upload/:id') // http:localhost:3000/categories -> PUT
-  @UseInterceptors(FilesInterceptor('files[]', 4)) // Max 4 files
-  updateWithImage(
+  @HasRoles(JwtRole.ADMIN)
+  @UseInterceptors(FilesInterceptor('files[]', 4))
+  async update(
     @UploadedFiles(
       new ParseFilePipe({
         validators: [
-          new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 5 }), // 5MB por imagen
+          new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 5 }),
           new FileTypeValidator({ fileType: '.(png|jpeg|jpg)' }),
         ],
+        fileIsRequired: false,
       })
     )
     files: Array<Express.Multer.File>,
     @Param('id', ParseIntPipe) id: number,
-    @Body() product: UpdateProductDto
+    @Body() rawBody: any // <-- importante: primero recibimos datos crudos
   ) {
-    console.log('PRoduct: ', product);
+    // 🔧 Transformamos los valores antes de pasar al servicio
+    const transformedBody: UpdateProductDto = {
+      ...rawBody,
+      price: rawBody.price ? parseFloat(rawBody.price) : undefined,
+      id_category: rawBody.id_category ? parseInt(rawBody.id_category, 10) : undefined,
+      images_to_update: rawBody.images_to_update
+        ? Array.isArray(rawBody.images_to_update)
+          ? rawBody.images_to_update.map(Number)
+          : [Number(rawBody.images_to_update)]
+        : [],
+    };
 
-    return this.productsService.updateWithImages(files, id, product);
-  }
-
-  @HasRoles(JwtRole.ADMIN)
-  @UseGuards(JwtAuthGuard, JwtRolesGuard)
-  @Put(':id') // http:localhost:3000/categories -> PUT
-  update(@Param('id', ParseIntPipe) id: number, @Body() product: UpdateProductDto) {
-    return this.productsService.update(id, product);
+    return this.productsService.update(id, transformedBody, files);
   }
 
   @HasRoles(JwtRole.ADMIN)
