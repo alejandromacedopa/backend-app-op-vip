@@ -14,7 +14,7 @@ RUN npm install
 COPY . .
 
 # Compila el proyecto (usa tsconfig.json)
-RUN npm run build
+RUN npm run buildS
 
 # Expone el puerto que usa tu aplicación NestJS
 EXPOSE 3000
