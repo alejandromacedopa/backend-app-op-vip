@@ -32,6 +32,7 @@ async function bootstrap() {
     })
   );
   
+  //3001 port 
   app.useGlobalPipes(new ValidationPipe({ forbidUnknownValues: false }));
   app.use(cors());
   await app.listen(process.env.PORT || 3001);
