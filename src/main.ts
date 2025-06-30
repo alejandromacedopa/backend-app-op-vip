@@ -1,4 +1,6 @@
 import { NestFactory } from '@nestjs/core';
+import * as crypto from 'crypto';
+(global as any).crypto = crypto; // Agrega el módulo a global
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import * as cors from 'cors';
@@ -29,7 +31,7 @@ async function bootstrap() {
       },
     })
   );
-
+  
   app.useGlobalPipes(new ValidationPipe({ forbidUnknownValues: false }));
   app.use(cors());
   await app.listen(process.env.PORT || 3001);
